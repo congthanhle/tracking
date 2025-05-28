@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+.custom-cursor {
+  cursor: url("/racket.cur"), auto;
+}
+
+.main-background {
+  background: linear-gradient(to bottom right, #0f766e, #14532d);
+}
+
+.ant-menu-dark .ant-menu-item-selected,
+.ant-menu-dark .ant-menu-item-active {
+  background: transparent !important;
+  color: #fff !important;
+}
+
+
+
+.ant-form-item-explain-error{
+  @apply text-xs mt-1;
+}
