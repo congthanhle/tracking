@@ -44,9 +44,6 @@ export default function MainLayout() {
       <main className="flex-1">
         <Outlet />
       </main>
-      <footer className="bg-gray-100 text-center p-2 text-sm text-gray-600">
-        © 2025 Badminton Group Tracker
-      </footer>
     </div>
   );
 }
