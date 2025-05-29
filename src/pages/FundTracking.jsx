@@ -1,7 +1,8 @@
 import { DatePicker, Table, ConfigProvider, Input } from "antd";
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import viVN from "antd/locale/vi_VN";
 import dayjs from "dayjs";
+import axios from "axios";
 import "dayjs/locale/vi";
 dayjs.locale("vi");
 
@@ -49,76 +50,85 @@ const columns = [
   },
 ];
 
-const data = [
-  {
-    key: "1",
-    name: "Nguyễn Văn A",
-    coDinh: 3,
-    thanhTienCoDinh: 300000,
-    vangLai: 2,
-    thanhTienVangLai: 200000,
-    tong: 500000,
-    daDong: 300000,
-    conLai: 200000,
-  },
-  {
-    key: "2",
-    name: "Trần Thị B",
-    coDinh: 1,
-    thanhTienCoDinh: 100000,
-    vangLai: 4,
-    thanhTienVangLai: 400000,
-    tong: 500000,
-    daDong: 500000,
-    conLai: 0,
-  },
-];
-
 const PaymentTable = () => {
   const [searchText, setSearchText] = useState("");
-  const [filteredData, setFilteredData] = useState(data);
+  const [rawData, setRawData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [range, setRange] = useState("Sheet1!A2:H");
+
+  const API_KEY = "AIzaSyBpfjjKIYKrYcZ1qp1s7zxW4CFaRoooqlU";
+  const SHEET_ID = "19AQBgIAlDtnIDtfUARteodpxVW2tTXYR-rtZp0-Y9ls";
+
+  const fetchData = useCallback(async () => {
+    try {
+      const res = await axios.get(
+        `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?key=${API_KEY}`
+      );
+      const rows = res.data.values || [];
+      const formatted = rows.map((row, index) => ({
+        key: index.toString(),
+        name: row[0],
+        coDinh: parseInt(row[1] || 0),
+        thanhTienCoDinh: parseInt(row[2] || 0),
+        vangLai: parseInt(row[3] || 0),
+        thanhTienVangLai: parseInt(row[4] || 0),
+        tong: parseInt(row[5] || 0),
+        daDong: parseInt(row[6] || 0),
+        conLai: parseInt(row[7] || 0),
+      }));
+
+      setRawData(formatted);
+      setFilteredData(formatted);
+    } catch (error) {
+      console.error("Error fetching data from Google Sheets:", error);
+      setRawData([]);
+      setFilteredData([]);
+    }
+  }, [range]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleSearch = (value) => {
     setSearchText(value);
     const lowerKeyword = value.toLowerCase();
-    const matches = data.filter((item) =>
+    const matches = rawData.filter((item) =>
       item.name.toLowerCase().includes(lowerKeyword)
     );
-    const nonMatches = data.filter(
-      (item) => !item.name.toLowerCase().includes(lowerKeyword)
-    );
-    setFilteredData([...matches, ...nonMatches]);
+    setFilteredData([...matches]);
   };
 
-   return (
-        <ConfigProvider locale={viVN}>
+  return (
+    <ConfigProvider locale={viVN}>
       <div className="p-4 mx-auto">
-        <div className="flex gap-4 mb-4">
-          <div className="flex flex-col w-xs">
+        <div className="flex gap-4 mb-4 flex-wrap">
+          <div className="flex flex-col">
             <label className="text-sm font-medium text-gray-600 mb-1">Tháng:</label>
             <DatePicker
               picker="month"
-              format="MM/YYYY"
+              format="MM_YYYY"
               placeholder="Chọn tháng"
               onChange={(date, dateString) => {
-                console.log(`Tháng được chọn: ${dateString}`);
+                if (date) {
+                  setRange(`${dateString}!A2:H`);
+                }
               }}
-              allowClear
-              className="w-full"
+              allowClear={false}
+              className="w-48"
             />
           </div>
-          <div className="flex flex-col md:col-span-2 w-xs">
+          <div className="flex flex-col">
             <label className="text-sm font-medium text-gray-600 mb-1">Tìm kiếm theo tên:</label>
             <Input
               placeholder="Nhập tên..."
               value={searchText}
               onChange={(e) => handleSearch(e.target.value)}
-              className="w-full"
+              className="w-64"
             />
           </div>
         </div>
 
-        {/* Bảng */}
         <div className="overflow-x-auto">
           <Table
             columns={columns}
